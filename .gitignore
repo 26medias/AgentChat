@@ -1,3 +1,7 @@
+# Database
+agentchat.db
+agentchat.db-*
+
 # Logs
 logs
 *.log
