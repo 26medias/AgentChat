@@ -121,23 +121,28 @@ The server runs on WebSocket and persists data to SQLite. Configuration via envi
 
 ### Command Plugins
 
-Register custom commands in `server/index.js`:
+Commands are auto-discovered from `server/commands/`. Drop a `.js` file that exports `{ name, description, handler }`:
 
 ```js
-const commands = require('./commands');
-
-commands.register('roll', 'Roll dice (e.g. /roll 2d6)', (args, ctx) => {
-  const match = args.match(/^(\d+)d(\d+)$/);
-  if (!match) return 'Usage: /roll NdN';
-  const [, count, sides] = match;
-  const rolls = Array.from({ length: +count }, () =>
-    Math.floor(Math.random() * +sides) + 1
-  );
-  return `Rolled ${rolls.join(', ')} = ${rolls.reduce((a, b) => a + b, 0)}`;
-});
+// server/commands/roll.js
+module.exports = {
+  name: 'roll',
+  description: 'Roll dice (e.g. /roll 2d6)',
+  handler(args, ctx) {
+    const match = args.match(/^(\d+)d(\d+)$/);
+    if (!match) return 'Usage: /roll NdN';
+    const [, count, sides] = match;
+    const rolls = Array.from({ length: +count }, () =>
+      Math.floor(Math.random() * +sides) + 1
+    );
+    return `Rolled ${rolls.join(', ')} = ${rolls.reduce((a, b) => a + b, 0)}`;
+  },
+};
 ```
 
-The command handler receives `(args, context)` where context includes `{ username, room, db, broadcast }`.
+The handler receives `(args, context)` where context includes `{ username, room, db, broadcast }`.
+
+Built-in commands: `/help` (list commands), `/system <message>` (broadcast a system message to the room).
 
 ## Client
 
@@ -184,7 +189,10 @@ AgentChat/
 │   ├── auth.js      # Password hashing and token management
 │   ├── rooms.js     # Room tracking and presence
 │   ├── messages.js  # Message and DM handling
-│   ├── commands.js  # Command plugin registry
+│   ├── commands.js  # Command plugin registry (auto-discovers commands/)
+│   ├── commands/    # Drop-in command plugins
+│   │   ├── help.js
+│   │   └── system.js
 │   ├── protocol.js  # JSON parse/send helpers
 │   └── handler.js   # WebSocket message dispatch
 ├── client/          # React web client (Vite + Tailwind)
